@@ -14,7 +14,8 @@ def svm_loss_naive(W, X, y, reg):
     - W: A numpy array of shape (D, C) containing weights.
     - X: A numpy array of shape (N, D) containing a minibatch of data.
     - y: A numpy array of shape (N,) containing training labels; y[i] = c means
-      that X[i] has label c, where 0 <= c < C.
+      that X[i] has label ctogk9128
+      , where 0 <= c < C.
     - reg: (float) regularization strength
 
     Returns a tuple of:
@@ -42,7 +43,7 @@ def svm_loss_naive(W, X, y, reg):
                 #dW(margin) = dW ((X[i].dot(W))[j]) - dW((X[i].dot(W))[y[i]])
                 dW[:,j] += X[i]
                 dW[:,y[i]] -=X[i]
-                #dW[i][j] += X[i][j]
+                
                 
     # Right now the loss is a sum over all training examples, but we want it
     # to be an average instead so we divide by num_train.
@@ -64,6 +65,7 @@ def svm_loss_naive(W, X, y, reg):
 
     pass
 
+
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     
     return loss, dW
@@ -78,21 +80,46 @@ def svm_loss_vectorized(W, X, y, reg):
     """
     loss = 0.0
     dW = np.zeros(W.shape) # initialize the gradient as zero
+    #2D there are no diffrence between matmul and dot. and ndarray(numpy) does not have matmul
     scores = X.dot(W)
+    num_train = X.shape[0]
     
-    y_array = np.array(y)
-    scores = scores[:,y]
-    print(scores.shape)
-    print(scores)
+  
+    correct_class_scores = scores[np.arange(num_train),y].reshape(num_train,1)
+    lossfunction = np.maximum(0,scores - correct_class_scores +1)
+    
+    # correct scores set to 0
+    lossfunction[np.arange(num_train),y] = 0 
+    
+    loss = lossfunction.sum() / num_train
+    loss += reg*np.sum(W*W)
+   
+    
     #############################################################################
     # TODO:                                                                     #
     # Implement a vectorized version of the structured SVM loss, storing the    #
     # result in loss.                                                           #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-    pass
-    #3loss = scores - correct_class_score + 1
+    
+    
+    #D = maximum (0, scores - correct_class_scores +1)
+    
+    
+    dLdD = np.zeros(lossfunction.shape)
+    #if lossfunction > 0  dLdD = dscores(dscores) =1
+    dLdD[lossfunction>0] = 1
+    
+    #d(correct_class_socres)/d(scores) =>dLdD[range(num_train),y] - 1
+    valid = dLdD.sum(axis=1)
+    dLdD[range(num_train),y] -=valid
+   
 
+    #dLdW = dLdD.dot(X.T)
+    dW = (X.T).dot(dLdD)
+    dW /= num_train
+    dW += reg*2*W
+    
     
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -107,7 +134,7 @@ def svm_loss_vectorized(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
